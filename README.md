@@ -1,8 +1,8 @@
-# actions-s3-cache
+# actions-azure-cache
 
-This action enables caching dependencies to s3 compatible storage, e.g. minio, AWS S3
+This action enables caching dependencies to self-managed Azure blob storage.
 
-It also has github [actions/cache@v2](https://github.com/actions/cache) fallback if s3 save & restore fails
+It also has github [actions/cache@v2](https://github.com/actions/cache) fallback if blob storage save & restore fails
 
 ## Usage
 
@@ -20,14 +20,18 @@ jobs:
     runs-on: [ubuntu-latest]
 
     steps:
-      - uses: tespkg/actions-cache@v1
+      # Login to azure
+      - name: Azure login
+        uses: azure/login@v2
         with:
-          endpoint: play.min.io # optional, default s3.amazonaws.com
-          insecure: false # optional, use http instead of https. default false
-          accessKey: "Q3AM3UQ867SPQQA43P2F" # required
-          secretKey: "zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG" # required
-          sessionToken: "AQoDYXdzEJraDcqRtz123" # optional
-          bucket: actions-cache # required
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - uses: nurture-tech/actions-azure-cache@v1
+        with:
+          account: myorg-actions-cache # required
+          container: cache # required
           use-fallback: true # optional, use github actions cache fallback, default true
 
           # actions/cache compatible properties: https://github.com/actions/cache
@@ -39,33 +43,13 @@ jobs:
             ${{ runner.os }}-yarn-
 ```
 
-You can also set env instead of using `with`:
-
-```yaml
-      - uses: tespkg/actions-cache@v1
-        env:
-          AWS_ACCESS_KEY_ID: "Q3AM3UQ867SPQQA43P2F"
-          AWS_SECRET_ACCESS_KEY: "zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG"
-          # AWS_SESSION_TOKEN: "xxx"
-          AWS_REGION: "us-east-1"
-        with:
-          endpoint: play.min.io
-          bucket: actions-cache
-          use-fallback: false
-          key: test-${{ runner.os }}-${{ github.run_id }}
-          path: |
-            test-cache
-            ~/test-cache
-```
-
 To write to the cache only:
 
 ```yaml
-      - uses: tespkg/actions-cache/save@v1
+      - uses: nurture-tech/actions-azure-cache@v1
         with:
-          accessKey: "Q3AM3UQ867SPQQA43P2F" # required
-          secretKey: "zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG" # required
-          bucket: actions-cache # required
+          account: myorg-actions-cache # required
+          container: cache # required
           # actions/cache compatible properties: https://github.com/actions/cache
           key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
           path: |
@@ -75,11 +59,10 @@ To write to the cache only:
 To restore from the cache only:
 
 ```yaml
-      - uses: tespkg/actions-cache/restore@v1
+      - uses: nurture-tech/actions-azure-cache@v1
         with:
-          accessKey: "Q3AM3UQ867SPQQA43P2F" # required
-          secretKey: "zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG" # required
-          bucket: actions-cache # required
+          account: myorg-actions-cache # required
+          container: cache # required
           # actions/cache compatible properties: https://github.com/actions/cache
           key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
           path: |
@@ -91,16 +74,9 @@ To restore from the cache only:
 `restore-keys` works similar to how github's `@actions/cache@v2` works: It search each item in `restore-keys`
 as prefix in object names and use the latest one
 
-## Amazon S3 permissions
+## Azure Blob Store permissions
 
-When using this with Amazon S3, the following permissions are necessary:
-
- - `s3:PutObject`
- - `s3:GetObject`
- - `s3:ListBucket`
- - `s3:GetBucketLocation`
- - `s3:ListBucketMultipartUploads`
- - `s3:ListMultipartUploadParts`
+The Azure credentials supplied must have the `Storage Blob Data Contributor` role on the storage container.
 
 # Note on release
 
