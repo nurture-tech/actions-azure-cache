@@ -1,6 +1,5 @@
 {
   "name": "@nurture-tech/actions-azure-cache",
-  "main": "lib/restoreCache.js",
   "license": "MIT",
   "author": "Github",
   "contributors": [

@@ -10,18 +10,20 @@ import {
   getInputAsArray,
   getInputAsBoolean,
   isGhes,
-  newMinio,
+  newBlobClient,
   setCacheHitOutput,
   setCacheSizeOutput,
   saveMatchedKey,
   getInput,
+  newContainerClient,
 } from "./utils";
 
 process.on("uncaughtException", (e) => core.info("warning: " + e.message));
 
 async function restoreCache() {
   try {
-    const bucket = core.getInput("bucket", { required: true });
+    const account = core.getInput("account", { required: true });
+    const container = core.getInput("container", { required: true });
     const key = core.getInput("key", { required: true });
     const useFallback = getInputAsBoolean("use-fallback");
     const paths = getInputAsArray("path");
@@ -30,12 +32,9 @@ async function restoreCache() {
     try {
       // Inputs are re-evaluted before the post action, so we want to store the original values
       core.saveState(State.PrimaryKey, key);
-      core.saveState(State.AccessKey, getInput("accessKey", "AWS_ACCESS_KEY_ID"));
-      core.saveState(State.SecretKey, getInput("secretKey", "AWS_SECRET_ACCESS_KEY"));
-      core.saveState(State.SessionToken, getInput("sessionToken", "AWS_SESSION_TOKEN"));
-      core.saveState(State.Region, getInput("region", "AWS_REGION"));
+      core.saveState(State.Container, container);
+      core.saveState(State.Account, account);
 
-      const mc = newMinio();
 
       const compressionMethod = await utils.getCompressionMethod();
       const cacheFileName = utils.getCacheFileName(compressionMethod);
@@ -44,9 +43,13 @@ async function restoreCache() {
         cacheFileName
       );
 
+      const cc = newContainerClient({
+        account,
+        container,
+      });
+
       const { item: obj, matchingKey } = await findObject(
-        mc,
-        bucket,
+        cc,
         key,
         restoreKeys,
         compressionMethod
@@ -54,22 +57,28 @@ async function restoreCache() {
       core.debug("found cache object");
       saveMatchedKey(matchingKey);
       core.info(
-        `Downloading cache from s3 to ${archivePath}. bucket: ${bucket}, object: ${obj.name}`
+        `Downloading cache from azure to ${archivePath}. account: ${account}, container: ${container}, object: ${obj.name}`
       );
-      await mc.fGetObject(bucket, obj.name, archivePath);
+      const mc = newBlobClient({
+        account,
+        container,
+        path: obj.name
+      });
+
+      await mc.downloadToFile(archivePath);
 
       if (core.isDebug()) {
         await listTar(archivePath, compressionMethod);
       }
 
-      core.info(`Cache Size: ${formatSize(obj.size)} (${obj.size} bytes)`);
+      core.info(`Cache Size: ${formatSize(obj.properties.contentLength)} (${obj.properties.contentLength} bytes)`);
 
       await extractTar(archivePath, compressionMethod);
       setCacheHitOutput(matchingKey === key);
-      setCacheSizeOutput(obj.size)
-      core.info("Cache restored from s3 successfully");
+      setCacheSizeOutput(obj.properties.contentLength ?? 0)
+      core.info("Cache restored from azure successfully");
     } catch (e) {
-      core.info("Restore s3 cache failed: " + e.message);
+      core.info("Restore azure cache failed: " + e.message);
       setCacheHitOutput(false);
       if (useFallback) {
         if (isGhes()) {
