@@ -6,6 +6,7 @@ import { State } from "./state";
 import path from "path";
 import {createTar, listTar} from "@actions/cache/lib/internal/tar";
 import * as cache from "@actions/cache";
+import { DefaultAzureCredential } from "@azure/identity";
 
 export function isGhes(): boolean {
   const ghUrl = new URL(
@@ -36,6 +37,7 @@ export function newBlobClient({
 }) {
   return new BlockBlobClient(
     `https://${account}.blob.core.windows.net/${container}/${path}`,
+    new DefaultAzureCredential()
   );
 }
 
@@ -48,6 +50,7 @@ export function newContainerClient({
 }) {
   return new ContainerClient(
     `https://${account}.blob.core.windows.net/${container}`,
+    new DefaultAzureCredential()
   );
 }
 
