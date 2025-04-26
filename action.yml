@@ -1,6 +1,6 @@
-name: "s3 cache"
-author: tespkg
-description: "S3 actions cache with actions/cache@v2 passthrough"
+name: "azure cache"
+author: nurture-tech  
+description: "Azure blob storage actions cache with actions/cache@v2 passthrough"
 inputs:
   account:
     description: Azure storage account name
