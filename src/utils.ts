@@ -199,7 +199,7 @@ export async function saveCache(standalone: boolean) {
     const key = standalone ? core.getInput("key", { required: true }) : core.getState(State.PrimaryKey);
     const useFallback = getInputAsBoolean("use-fallback");
     const paths = getInputAsArray("path");
-    const useAzureCliAuth = getInputAsBoolean("useAzureCliAuth");
+    const useAzureCliAuth = getInputAsBoolean("use-azure-cli-auth");
 
     try {
       const compressionMethod = await utils.getCompressionMethod();

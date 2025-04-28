@@ -80676,7 +80676,7 @@ function saveCache(standalone) {
             const key = standalone ? core.getInput("key", { required: true }) : core.getState(state_1.State.PrimaryKey);
             const useFallback = getInputAsBoolean("use-fallback");
             const paths = getInputAsArray("path");
-            const useAzureCliAuth = getInputAsBoolean("useAzureCliAuth");
+            const useAzureCliAuth = getInputAsBoolean("use-azure-cli-auth");
             try {
                 const compressionMethod = yield utils.getCompressionMethod();
                 const cachePaths = yield utils.resolvePaths(paths);

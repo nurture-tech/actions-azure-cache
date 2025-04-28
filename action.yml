@@ -8,7 +8,7 @@ inputs:
   container:
     description: Azure storage container name
     required: true
-  useAzureCliAuth:
+  use-azure-cli-auth:
     description: "Use previously run azure/login@v1 step to authenticate"
     required: false
   path:
