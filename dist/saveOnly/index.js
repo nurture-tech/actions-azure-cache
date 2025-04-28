@@ -80386,8 +80386,6 @@ var State;
 (function (State) {
     State["MatchedKey"] = "matched-key";
     State["PrimaryKey"] = "primary-key";
-    State["Container"] = "container";
-    State["Account"] = "account";
 })(State || (exports.State = State = {}));
 
 
@@ -80466,12 +80464,12 @@ function getInput(key, envKey) {
     return result;
 }
 exports.getInput = getInput;
-function newBlobClient({ account, container, path, }) {
-    return new storage_blob_1.BlockBlobClient(`https://${account}.blob.core.windows.net/${container}/${path}`, new identity_1.DefaultAzureCredential());
+function newBlobClient({ account, container, path, useAzureCliAuth }) {
+    return new storage_blob_1.BlockBlobClient(`https://${account}.blob.core.windows.net/${container}/${path}`, useAzureCliAuth ? new identity_1.AzureCliCredential() : new identity_1.DefaultAzureCredential());
 }
 exports.newBlobClient = newBlobClient;
-function newContainerClient({ account, container, }) {
-    return new storage_blob_1.ContainerClient(`https://${account}.blob.core.windows.net/${container}`, new identity_1.DefaultAzureCredential());
+function newContainerClient({ account, container, useAzureCliAuth }) {
+    return new storage_blob_1.ContainerClient(`https://${account}.blob.core.windows.net/${container}`, useAzureCliAuth ? new identity_1.AzureCliCredential() : new identity_1.DefaultAzureCredential());
 }
 exports.newContainerClient = newContainerClient;
 function getInputAsBoolean(name, options) {
@@ -80596,6 +80594,7 @@ function saveCache(standalone) {
             const key = standalone ? core.getInput("key", { required: true }) : core.getState(state_1.State.PrimaryKey);
             const useFallback = getInputAsBoolean("use-fallback");
             const paths = getInputAsArray("path");
+            const useAzureCliAuth = getInputAsBoolean("useAzureCliAuth");
             try {
                 const compressionMethod = yield utils.getCompressionMethod();
                 const cachePaths = yield utils.resolvePaths(paths);
@@ -80614,6 +80613,7 @@ function saveCache(standalone) {
                 const mc = newBlobClient({
                     account,
                     container,
+                    useAzureCliAuth,
                     path: object
                 });
                 yield mc.uploadFile(archivePath);

@@ -8,6 +8,9 @@ inputs:
   container:
     description: Azure storage container name
     required: true
+  useAzureCliAuth:
+    description: "Use previously run azure/login@v1 step to authenticate"
+    required: false
   path:
     description: "A list of files, directories, and wildcard patterns to cache and restore"
     required: true

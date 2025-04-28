@@ -28,12 +28,11 @@ async function restoreCache() {
     const useFallback = getInputAsBoolean("use-fallback");
     const paths = getInputAsArray("path");
     const restoreKeys = getInputAsArray("restore-keys");
+    const useAzureCliAuth = getInputAsBoolean("use-azure-cli-auth");
 
     try {
       // Inputs are re-evaluted before the post action, so we want to store the original values
       core.saveState(State.PrimaryKey, key);
-      core.saveState(State.Container, container);
-      core.saveState(State.Account, account);
 
 
       const compressionMethod = await utils.getCompressionMethod();
@@ -46,6 +45,7 @@ async function restoreCache() {
       const cc = newContainerClient({
         account,
         container,
+        useAzureCliAuth
       });
 
       const { item: obj, matchingKey } = await findObject(
@@ -62,6 +62,7 @@ async function restoreCache() {
       const mc = newBlobClient({
         account,
         container,
+        useAzureCliAuth,
         path: obj.name
       });
 
